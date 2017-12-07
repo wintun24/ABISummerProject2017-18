@@ -7,9 +7,9 @@ import sys, os
 from opencmiss.iron import iron
 
 # Set problem parameters
-height = 2.0
-width = 2.0
-length = 3.0
+height = 5.0
+width = 5.0
+length = 15.0
 
 (coordinateSystemUserNumber,
  regionUserNumber,
@@ -156,9 +156,21 @@ lastNodeNumber = nodes.numberOfNodes
 #if firstNodeDomain == computationalNodeNumber:
 for i in range(1,37):
     boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-for i in range(181,217):
+for i in range(181,187):
 #if lastNodeDomain == computationalNodeNumber:
     boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+for i in range(211,217):
+##if lastNodeDomain == computationalNodeNumber:
+    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,205,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,199,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,193,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,187,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,198,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,192,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,204,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,210,1,iron.BoundaryConditionsTypes.FIXED,1.0)
 solverEquations.BoundaryConditionsCreateFinish()
 
 # Solve the problem
