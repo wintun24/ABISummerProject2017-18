@@ -1,33 +1,38 @@
-# import pdb; pdb.set_trace()
+#!/usr/bin/env python
 
-# Add Python bindings directory to PATH
-import sys, os
-
-# Initialise OpenCMISS-Iron
+# Intialise OpenCMISS-Iron
 from opencmiss.iron import iron
 
+# parameters.parse()
+
 # Set problem parameters
-height = 2.0
+height = 1.0
 width = 2.0
 length = 3.0
+diff_coeff = 1.0
+initial_conc= 0.5
+start_time = 0.0 
+end_time = 1.0
+time_step = 0.01
+screen_output_freq = 2 #how many time steps between outputs to screen
 
 (coordinateSystemUserNumber,
- regionUserNumber,
- basisUserNumber,
- generatedMeshUserNumber,
- meshUserNumber,
- decompositionUserNumber,
- geometricFieldUserNumber,
- equationsSetFieldUserNumber,
- dependentFieldUserNumber,
- equationsSetUserNumber,
- problemUserNumber) = range(1,12)
+    regionUserNumber,
+    basisUserNumber,
+    generatedMeshUserNumber,
+    meshUserNumber,
+    decompositionUserNumber,
+    geometricFieldUserNumber,
+    equationsSetFieldUserNumber,
+    dependentFieldUserNumber,
+    materialFieldUserNumber,
+    equationsSetUserNumber,
+    problemUserNumber) = range(1,13)
 
 numberGlobalXElements = 5
 numberGlobalYElements = 5
 numberGlobalZElements = 5
 
-iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"])
 
 numberOfComputationalNodes = iron.ComputationalNumberOfNodesGet()
 computationalNodeNumber = iron.ComputationalNodeNumberGet()
@@ -41,16 +46,20 @@ coordinateSystem.CreateFinish()
 # Create a region
 region = iron.Region()
 region.CreateStart(regionUserNumber,iron.WorldRegion)
-region.label = "LaplaceRegion"
+region.label = "DiffusionRegion"
 region.coordinateSystem = coordinateSystem
 region.CreateFinish()
 
 # Create a tri-linear lagrange basis
 basis = iron.Basis()
 basis.CreateStart(basisUserNumber)
-basis.TypeSet(iron.BasisTypes.LAGRANGE_HERMITE_TP)
+
+
+basis.TypeSet(iron.BasisTypes.SIMPLEX)
 basis.numberOfXi = 3
-basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*3
+#basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*3
+basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_SIMPLEX]*3
+#basis.quadratureNumberOfGaussXi = [2]*3
 basis.CreateFinish()
 
 # Create a generated mesh
@@ -63,6 +72,9 @@ generatedMesh.numberOfElements = [numberGlobalXElements,numberGlobalYElements,nu
 
 mesh = iron.Mesh()
 generatedMesh.CreateFinish(meshUserNumber,mesh)
+
+numberOfElements = mesh.numberOfElements
+print("number of elements: " + str(numberOfElements))
 
 # Create a decomposition for the mesh
 decomposition = iron.Decomposition()
@@ -83,14 +95,14 @@ geometricField.CreateFinish()
 # Set geometry from the generated mesh
 generatedMesh.GeometricParametersCalculate(geometricField)
 
-# Create standard Laplace equations set
+# Create standard Diffusion equations set
 equationsSetField = iron.Field()
 equationsSet = iron.EquationsSet()
 equationsSetSpecification = [iron.EquationsSetClasses.CLASSICAL_FIELD,
-                             iron.EquationsSetTypes.LAPLACE_EQUATION,
-                             iron.EquationsSetSubtypes.STANDARD_LAPLACE]
+        iron.EquationsSetTypes.DIFFUSION_EQUATION,
+        iron.EquationsSetSubtypes.NO_SOURCE_DIFFUSION]
 equationsSet.CreateStart(equationsSetUserNumber,region,geometricField,
-                         equationsSetSpecification,equationsSetFieldUserNumber,equationsSetField)
+        equationsSetSpecification,equationsSetFieldUserNumber,equationsSetField)
 equationsSet.CreateFinish()
 
 # Create dependent field
@@ -100,8 +112,17 @@ dependentField.DOFOrderTypeSet(iron.FieldVariableTypes.U,iron.FieldDOFOrderTypes
 dependentField.DOFOrderTypeSet(iron.FieldVariableTypes.DELUDELN,iron.FieldDOFOrderTypes.SEPARATED)
 equationsSet.DependentCreateFinish()
 
+# Create material field
+materialField = iron.Field()
+equationsSet.MaterialsCreateStart(materialFieldUserNumber,materialField)
+equationsSet.MaterialsCreateFinish()
+## I believe this will change the diffusion coeff
+materialField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,diff_coeff)
+materialField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2,diff_coeff)
+materialField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3,diff_coeff)
+
 # Initialise dependent field
-dependentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,0.5)
+dependentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,initial_conc)
 
 # Create equations
 equations = iron.Equations()
@@ -110,29 +131,35 @@ equations.sparsityType = iron.EquationsSparsityTypes.SPARSE
 equations.outputType = iron.EquationsOutputTypes.NONE
 equationsSet.EquationsCreateFinish()
 
-# Create problem
+# Create Diffusion equation problem
 problem = iron.Problem()
 problemSpecification = [iron.ProblemClasses.CLASSICAL_FIELD,
-                        iron.ProblemTypes.LAPLACE_EQUATION,
-                        iron.ProblemSubtypes.STANDARD_LAPLACE]
+        iron.ProblemTypes.DIFFUSION_EQUATION,
+        iron.ProblemSubtypes.NO_SOURCE_DIFFUSION]
 problem.CreateStart(problemUserNumber, problemSpecification)
 problem.CreateFinish()
 
 # Create control loops
 problem.ControlLoopCreateStart()
+controlLoop = iron.ControlLoop()
+problem.ControlLoopGet([iron.ControlLoopIdentifiers.NODE],controlLoop)
+controlLoop.TimesSet(start_time,end_time,time_step)
+controlLoop.TimeOutputSet(screen_output_freq)
 problem.ControlLoopCreateFinish()
 
 # Create problem solver
-solver = iron.Solver()
+dynamicsolver = iron.Solver()
 problem.SolversCreateStart()
-problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,solver)
-solver.outputType = iron.SolverOutputTypes.SOLVER
-solver.linearType = iron.LinearSolverTypes.ITERATIVE
-solver.linearIterativeAbsoluteTolerance = 1.0E-12
-solver.linearIterativeRelativeTolerance = 1.0E-12
+problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,dynamicsolver)
+dynamicsolver.outputType = iron.SolverOutputTypes.PROGRESS
+linearSolver=iron.Solver()
+dynamicsolver.DynamicLinearSolverGet(linearSolver)
+linearSolver.outputType = iron.SolverOutputTypes.NONE
+linearSolver.linearType = iron.LinearSolverTypes.ITERATIVE
+linearSolver.LinearIterativeMaximumIterationsSet(1000)
 problem.SolversCreateFinish()
 
-# Create solver equations and add equations set to solver equations
+## Create solver equations and add equations set to solver equations
 solver = iron.Solver()
 solverEquations = iron.SolverEquations()
 problem.SolverEquationsCreateStart()
@@ -142,45 +169,43 @@ solverEquations.sparsityType = iron.SolverEquationsSparsityTypes.SPARSE
 equationsSetIndex = solverEquations.EquationsSetAdd(equationsSet)
 problem.SolverEquationsCreateFinish()
 
-# Create boundary conditions and set first and last nodes to 0.0 and 1.0
+## Create boundary conditions and set first and last nodes to 0.0 and 1.0
 boundaryConditions = iron.BoundaryConditions()
 solverEquations.BoundaryConditionsCreateStart(boundaryConditions)
-firstNodeNumber=[1,2]
+firstNodeNumber=1
 nodes = iron.Nodes()
 region.NodesGet(nodes)
 lastNodeNumber = nodes.numberOfNodes
-#firstNodeDomain = decomposition.NodeDomainGet(firstNodeNumber,1)
-
-#lastNodeDomain = decomposition.NodeDomainGet(lastNodeNumber,1)
-
-#if firstNodeDomain == computationalNodeNumber:
-for i in range(1,37):
-    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-for i in range(181,217):
-#if lastNodeDomain == computationalNodeNumber:
-    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+firstNodeDomain = decomposition.NodeDomainGet(firstNodeNumber,1)
+lastNodeDomain = decomposition.NodeDomainGet(lastNodeNumber,1)
+if firstNodeDomain == computationalNodeNumber:
+    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,firstNodeNumber,1,iron.BoundaryConditionsTypes.FIXED,0.0)
+if lastNodeDomain == computationalNodeNumber:
+    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,lastNodeNumber,1,iron.BoundaryConditionsTypes.FIXED,1.0)
 solverEquations.BoundaryConditionsCreateFinish()
 
-# Solve the problem
-problem.Solve()
+## Solve the problem
 
+#iron.DiagnosticsSetOn(1,[1,2,3,4,5],"Diagnostics",["all"])
+problem.Solve()
+#iron.DiagnosticsSetOff()
 # Export results
-baseName = "laplace"
+baseName = "Diffusion"
 dataFormat = "PLAIN_TEXT"
 fml = iron.FieldMLIO()
 fml.OutputCreate(mesh, "", baseName, dataFormat)
 fml.OutputAddFieldNoType(baseName+".geometric", dataFormat, geometricField,
-                         iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
+    iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
 fml.OutputAddFieldNoType(baseName+".phi", dataFormat, dependentField,
-                         iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
-fml.OutputWrite("LaplaceSteadyState.xml")
+    iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
+fml.OutputWrite("DiffusionExample.xml")
 fml.Finalise()
 
 # Export results
 fields = iron.Fields()
 fields.CreateRegion(region)
-fields.NodesExport("LaplaceSteadyStateResults","FORTRAN")
-fields.ElementsExport("LaplaceSteadyStateResults","FORTRAN")
+fields.NodesExport("DiffusionResults","FORTRAN")
+fields.ElementsExport("DiffusionResults","FORTRAN")
 fields.Finalise()
 
 iron.Finalise()
