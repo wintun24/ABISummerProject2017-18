@@ -6,12 +6,12 @@ from opencmiss.iron import iron
 # parameters.parse()
 
 # Set problem parameters
-height = 1.0
-width = 2.0
-length = 3.0
+height = 2.0
+width = 0.0
+length = 10.0
 diff_coeff = 1.0
 initial_conc= 0.5
-v_strength=-0.01
+v_strength=-0.10
 start_time = 0.0 
 end_time = 1.0
 time_step = 0.01
@@ -31,9 +31,9 @@ screen_output_freq = 2 #how many time steps between outputs to screen
     equationsSetUserNumber,
     problemUserNumber) = range(1,14)
 
-numberGlobalXElements = 5
-numberGlobalYElements = 5
-numberGlobalZElements = 5
+numberGlobalXElements = 10
+numberGlobalYElements = 10
+numberGlobalZElements = 10
 
 
 numberOfComputationalNodes = iron.ComputationalNumberOfNodesGet()
@@ -52,20 +52,20 @@ region.label = "DiffusionRegion"
 region.coordinateSystem = coordinateSystem
 region.CreateFinish()
 
-# Create a tri-linear lagrange basis
+# Create a tri-quadratic Lagrange basis
 basis = iron.Basis()
 basis.CreateStart(basisUserNumber)
 basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
 basis.numberOfXi = 3
 basis.interpolationXi = [
-        iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE] * 3
+        iron.BasisInterpolationSpecifications.QUADRATIC_LAGRANGE] * 3
 basis.quadratureNumberOfGaussXi = [3] * 3
 basis.CreateFinish()
 
 # Create a generated mesh
 generatedMesh = iron.GeneratedMesh()
 generatedMesh.CreateStart(generatedMeshUserNumber,region)
-generatedMesh.type = iron.GeneratedMeshTypes.REGULAR
+generatedMesh.type = iron.GeneratedMeshTypes.CYLINDER
 generatedMesh.basis = [basis]
 generatedMesh.extent = [width,height,length]
 generatedMesh.numberOfElements = [numberGlobalXElements,numberGlobalYElements,numberGlobalZElements]
@@ -187,26 +187,35 @@ lastNodeNumber = nodes.numberOfNodes
 
 #lastNodeDomain = decomposition.NodeDomainGet(lastNodeNumber,1)
 
-#if firstNodeDomain == computationalNodeNumber:
-for i in range(1,37):
+for i in range(1,421):
     boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-for i in range(181,187):
-#if lastNodeDomain == computationalNodeNumber:
-    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-for i in range(211,217):
-###if lastNodeDomain == computationalNodeNumber:
-    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,205,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,199,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,193,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,187,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+    #8631,8652,8673,8694,8715,8736,
+    #8757,8778,8799,8820
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8421,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8442,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8463,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8484,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8505,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8526,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8547,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8568,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8589,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8610,1,iron.BoundaryConditionsTypes.FIXED,1.0)
 
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,198,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,192,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,204,1,iron.BoundaryConditionsTypes.FIXED,1.0)
-boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,210,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8610,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8631,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8652,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8673,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8694,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8715,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8736,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8757,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8778,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8799,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,8820,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+
+
 solverEquations.BoundaryConditionsCreateFinish()
-
 ## Solve the problem
 
 #iron.DiagnosticsSetOn(1,[1,2,3,4,5],"Diagnostics",["all"])
