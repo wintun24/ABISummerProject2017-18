@@ -11,6 +11,7 @@ width = 2.0
 length = 3.0
 diff_coeff = 1.0
 initial_conc= 0.5
+v_strength=-0.01
 start_time = 0.0 
 end_time = 1.0
 time_step = 0.01
@@ -25,9 +26,10 @@ screen_output_freq = 2 #how many time steps between outputs to screen
     geometricFieldUserNumber,
     equationsSetFieldUserNumber,
     dependentFieldUserNumber,
+    independentFieldUserNumber,
     materialFieldUserNumber,
     equationsSetUserNumber,
-    problemUserNumber) = range(1,13)
+    problemUserNumber) = range(1,14)
 
 numberGlobalXElements = 5
 numberGlobalYElements = 5
@@ -53,13 +55,11 @@ region.CreateFinish()
 # Create a tri-linear lagrange basis
 basis = iron.Basis()
 basis.CreateStart(basisUserNumber)
-
-
-basis.TypeSet(iron.BasisTypes.SIMPLEX)
+basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
 basis.numberOfXi = 3
-#basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*3
-basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_SIMPLEX]*3
-#basis.quadratureNumberOfGaussXi = [2]*3
+basis.interpolationXi = [
+        iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE] * 3
+basis.quadratureNumberOfGaussXi = [3] * 3
 basis.CreateFinish()
 
 # Create a generated mesh
@@ -99,8 +99,8 @@ generatedMesh.GeometricParametersCalculate(geometricField)
 equationsSetField = iron.Field()
 equationsSet = iron.EquationsSet()
 equationsSetSpecification = [iron.EquationsSetClasses.CLASSICAL_FIELD,
-        iron.EquationsSetTypes.DIFFUSION_EQUATION,
-        iron.EquationsSetSubtypes.NO_SOURCE_DIFFUSION]
+        iron.EquationsSetTypes.ADVECTION_DIFFUSION_EQUATION,
+        iron.EquationsSetSubtypes.NO_SOURCE_STATIC_ADVEC_DIFF]
 equationsSet.CreateStart(equationsSetUserNumber,region,geometricField,
         equationsSetSpecification,equationsSetFieldUserNumber,equationsSetField)
 equationsSet.CreateFinish()
@@ -124,6 +124,19 @@ materialField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldPa
 # Initialise dependent field
 dependentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,initial_conc)
 
+# Create independent field
+independentField = iron.Field()
+equationsSet.IndependentCreateStart(independentFieldUserNumber,independentField)
+#independentField.DOFOrderTypeSet(iron.FieldVariableTypes.U,iron.FieldDOFOrderTypes.SEPARATED)
+#independentField.DOFOrderTypeSet(iron.FieldVariableTypes.DELUDELN,iron.FieldDOFOrderTypes.SEPARATED)
+equationsSet.IndependentCreateFinish()
+
+# Initialise dependent field
+#in this mesh y is up
+independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,0.0)
+independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2,0.0)
+independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3,v_strength)
+
 # Create equations
 equations = iron.Equations()
 equationsSet.EquationsCreateStart(equations)
@@ -134,29 +147,23 @@ equationsSet.EquationsCreateFinish()
 # Create Diffusion equation problem
 problem = iron.Problem()
 problemSpecification = [iron.ProblemClasses.CLASSICAL_FIELD,
-        iron.ProblemTypes.DIFFUSION_EQUATION,
-        iron.ProblemSubtypes.NO_SOURCE_DIFFUSION]
+        iron.ProblemTypes.ADVECTION_DIFFUSION_EQUATION,
+        iron.ProblemSubtypes.NO_SOURCE_STATIC_ADVEC_DIFF]
 problem.CreateStart(problemUserNumber, problemSpecification)
 problem.CreateFinish()
 
 # Create control loops
 problem.ControlLoopCreateStart()
-controlLoop = iron.ControlLoop()
-problem.ControlLoopGet([iron.ControlLoopIdentifiers.NODE],controlLoop)
-controlLoop.TimesSet(start_time,end_time,time_step)
-controlLoop.TimeOutputSet(screen_output_freq)
 problem.ControlLoopCreateFinish()
 
 # Create problem solver
-dynamicsolver = iron.Solver()
+solver = iron.Solver()
 problem.SolversCreateStart()
-problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,dynamicsolver)
-dynamicsolver.outputType = iron.SolverOutputTypes.PROGRESS
-linearSolver=iron.Solver()
-dynamicsolver.DynamicLinearSolverGet(linearSolver)
-linearSolver.outputType = iron.SolverOutputTypes.NONE
-linearSolver.linearType = iron.LinearSolverTypes.ITERATIVE
-linearSolver.LinearIterativeMaximumIterationsSet(1000)
+problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,solver)
+solver.outputType = iron.SolverOutputTypes.SOLVER
+solver.linearType = iron.LinearSolverTypes.ITERATIVE
+solver.linearIterativeAbsoluteTolerance = 1.0E-12
+solver.linearIterativeRelativeTolerance = 1.0E-12
 problem.SolversCreateFinish()
 
 ## Create solver equations and add equations set to solver equations
@@ -176,12 +183,28 @@ firstNodeNumber=1
 nodes = iron.Nodes()
 region.NodesGet(nodes)
 lastNodeNumber = nodes.numberOfNodes
-firstNodeDomain = decomposition.NodeDomainGet(firstNodeNumber,1)
-lastNodeDomain = decomposition.NodeDomainGet(lastNodeNumber,1)
-if firstNodeDomain == computationalNodeNumber:
-    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,firstNodeNumber,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-if lastNodeDomain == computationalNodeNumber:
-    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,lastNodeNumber,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+#firstNodeDomain = decomposition.NodeDomainGet(firstNodeNumber,1)
+
+#lastNodeDomain = decomposition.NodeDomainGet(lastNodeNumber,1)
+
+#if firstNodeDomain == computationalNodeNumber:
+for i in range(1,37):
+    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,0.0)
+for i in range(181,187):
+#if lastNodeDomain == computationalNodeNumber:
+    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+for i in range(211,217):
+###if lastNodeDomain == computationalNodeNumber:
+    boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,i,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,205,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,199,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,193,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,187,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,198,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,192,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,204,1,iron.BoundaryConditionsTypes.FIXED,1.0)
+boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,210,1,iron.BoundaryConditionsTypes.FIXED,1.0)
 solverEquations.BoundaryConditionsCreateFinish()
 
 ## Solve the problem
