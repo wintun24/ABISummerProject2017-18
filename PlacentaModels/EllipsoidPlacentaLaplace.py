@@ -9,7 +9,7 @@ import itertools
 V = float(428)
 t = float(2.68)
 E = float(1.68)
-n = input()
+n = input('no. of grid nodes (682000 for optimal mesh):')
 
 #Use parameters to find a, b and c in (x^2/a^2 + y^2/b^2 + z^2/c^2 = 1)
 pi = math.pi
@@ -278,10 +278,10 @@ BVCount = arteries + veins
 #Randomly generate unique xy positions of blood vessels.
 random.seed(500)
 bv_y = []
-bv_x = np.array(random.sample(np.linspace(-xLen/2,xLen/2, nodeSpacing*1000), BVCount))
+bv_x = np.array(random.sample(np.linspace(-xLen/2,xLen/2, 100000), BVCount))
 max_y = np.sqrt(b**2 * (1 - (bv_x**2/a**2)))
 for maxY in max_y:
-  bv_y.append(random.choice(np.linspace(-maxY,maxY, nodeSpacing*1000)))
+  bv_y.append(random.choice(np.linspace(-maxY,maxY, 100000)))
 # get bv_x and bv_y in form of xy:
 bv_xy = np.zeros((len(bv_x), 2))
 bv_xy[:,0] = bv_x
@@ -314,7 +314,7 @@ for i in range(0,len(bv_xy)): #for each blood vessel:
 solverEquations.BoundaryConditionsCreateFinish()
 # Solve the problem
 problem.Solve()
-'''
+
 # Export results as fml files for the geometric field and the dependent field (.geometric and .phi respectively). Outputs a .xml file.
 baseName = "laplace"
 dataFormat = "PLAIN_TEXT"
@@ -324,9 +324,9 @@ fml.OutputAddFieldNoType(baseName + ".geometric", dataFormat, geometricField,
                          iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
 fml.OutputAddFieldNoType(baseName + ".phi", dataFormat, dependentField,
                          iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
-fml.OutputWrite("RegularEllipsoid.xml")
+fml.OutputWrite("LaplacePlacenta.xml")
 fml.Finalise()
-
+'''
 # Export results
 fields = iron.Fields()
 fields.CreateRegion(region)
