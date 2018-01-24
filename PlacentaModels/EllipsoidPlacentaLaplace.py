@@ -89,8 +89,10 @@ for element in element_nodes_array_raw:
 
 #update arrays without 0 volume elements, to pass into openCMISS
 element_nodes_array = element_nodes_array_raw[indexArr,:]
-element_array = range(0, len(element_nodes_array))
-node_array = range(0, len(node_coordinates))
+for i in range(len(element_nodes_array)):
+  element_nodes_array[i] = [x+1 for x in element_nodes_array[i]]
+element_array = range(1, len(element_nodes_array)+1)
+node_array = range(1, len(node_coordinates)+1)
 
 
 
@@ -155,6 +157,7 @@ nodes = iron.Nodes()
 nodes.CreateStart(region, total_number_of_nodes)
 
 # Refers to nodes by their user number as described in the original mesh
+
 nodes.UserNumbersAllSet(node_array)
 nodes.CreateFinish()
 
@@ -303,7 +306,7 @@ for i in range(0,len(bv_xy)): #for each blood vessel:
   closestNode = validNodes[np.argmin(distance)]
   #search node list for highest z closest node and set to conc.
   xyNodes = np.where(np.all(xyList == closestNode, axis = 1))[0]
-
+  xyNodes = [x+1 for x in xyNodes]
   if i < arteries:
     highNode = xyNodes[len(xyNodes) - 1]
     boundaryConditions.SetNode(dependentField,iron.FieldVariableTypes.U,1,1,highNode,1,iron.BoundaryConditionsTypes.FIXED,1.0)
@@ -326,13 +329,13 @@ fml.OutputAddFieldNoType(baseName + ".phi", dataFormat, dependentField,
                          iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES)
 fml.OutputWrite("LaplacePlacenta.xml")
 fml.Finalise()
-'''
+
 # Export results
 fields = iron.Fields()
 fields.CreateRegion(region)
 fields.NodesExport("LaplacePlacenta", "FORTRAN")
 fields.ElementsExport("LaplacePlacenta", "FORTRAN")
 fields.Finalise()
-'''
+
 
 iron.Finalise()
