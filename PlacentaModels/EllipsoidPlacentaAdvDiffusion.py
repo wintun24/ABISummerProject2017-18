@@ -243,16 +243,39 @@ dependentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldP
 independentField = iron.Field()
 equationsSet.IndependentCreateStart(independentFieldUserNumber,independentField)
 independentField.VariableLabelSet(iron.FieldVariableTypes.U, "Velocity")
-#independentField.DOFOrderTypeSet(iron.FieldVariableTypes.U,iron.FieldDOFOrderTypes.SEPARATED)
-#independentField.DOFOrderTypeSet(iron.FieldVariableTypes.DELUDELN,iron.FieldDOFOrderTypes.SEPARATED)
 equationsSet.IndependentCreateFinish()
 
 # Initialise dependent field
 #in this mesh y is up ## Rory - dont know what this means, maybe change later
-v_strength=-0.01
+vFileRaw = open('vtest.txt', 'r')
+vFile = vFileRaw.readlines()
+startLines = range(0,len(vFile)-2,3)
+
+for i in range(len(vFile)):
+  vFile[i] = vFile[i].split()
+print vFile
+
+vList = []
+print startLines
+for i in startLines:
+  nodeV = []
+  nodeV.append(float(vFile[i][0]))
+  nodeV.append(float(vFile[i][2]))
+  nodeV.append(float(vFile[i+1][2]))
+  nodeV.append(float(vFile[i+2][2]))
+  vList.append(nodeV)
+
+vFileRaw.close()
+
 independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,0.0)
 independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2,0.0)
-independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3,v_strength)
+independentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3,0.0)
+
+for vnode in vList:
+  independentField.ParameterSetUpdateNodeDP(iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES, 1, 1, vnode[0], 1, vnode[1])
+  independentField.ParameterSetUpdateNodeDP(iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES, 1, 1, vnode[0], 2, vnode[2])
+  independentField.ParameterSetUpdateNodeDP(iron.FieldVariableTypes.U, iron.FieldParameterSetTypes.VALUES, 1, 1, vnode[0], 3, vnode[3])
+
 
 # Create equations
 equations = iron.Equations()
@@ -361,11 +384,13 @@ fml.OutputAddFieldNoType(baseName+".phi", dataFormat, dependentField,
 fml.OutputWrite("AdvDiffusionPlacentaResults.xml")
 fml.Finalise()
 
+'''
 # Export results
 fields = iron.Fields()
 fields.CreateRegion(region)
 fields.NodesExport("AdvDiffusionPlacentaResults","FORTRAN")
 fields.ElementsExport("AdvDiffusionPlacentaResults","FORTRAN")
 fields.Finalise()
+'''
 
 iron.Finalise()
