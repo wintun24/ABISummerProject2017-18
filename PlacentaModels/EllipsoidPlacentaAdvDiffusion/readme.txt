@@ -5,6 +5,3 @@ NODENUM, VCOMPONENT, VALUE
 .
 .
 .
-
-
-Code output is included when run in full mesh (n-seed = 628000)
