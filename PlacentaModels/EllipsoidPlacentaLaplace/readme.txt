@@ -7,5 +7,3 @@ Script then solves for a laplace model of Oxygen concentration in an ellipsoid p
 Mesh with n-seed of 628000 is optimal.
 
 Surface blood vessels BCs are randomly positioned. 
-
-Example code output included in folder.
