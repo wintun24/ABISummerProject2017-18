@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Fieldml version="0.5.0" xsi:noNamespaceSchemaLocation="http://www.fieldml.org/resources/xml/0.5/FieldML_0.5.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <Region name="Diffusion">
+  <Import xlink:href="http://www.fieldml.org/resources/xml/0.5/FieldML_Library_0.5.xml" region="library">
+   <ImportType localName="real.1d" remoteName="real.1d"/>
+   <ImportType localName="localNodes.3d.tetrahedron4" remoteName="localNodes.3d.tetrahedron4"/>
+   <ImportEvaluator localName="localNodes.3d.tetrahedron4.argument" remoteName="localNodes.3d.tetrahedron4.argument"/>
+   <ImportEvaluator localName="interpolator.3d.unit.trilinearSimplex" remoteName="interpolator.3d.unit.trilinearSimplex"/>
+   <ImportType localName="parameters.3d.unit.trilinearSimplex" remoteName="parameters.3d.unit.trilinearSimplex"/>
+   <ImportType localName="chart.3d" remoteName="chart.3d"/>
+   <ImportEvaluator localName="chart.3d.argument" remoteName="chart.3d.argument"/>
+   <ImportEvaluator localName="parameters.3d.unit.trilinearSimplex.argument" remoteName="parameters.3d.unit.trilinearSimplex.argument"/>
+   <ImportEvaluator localName="shape.unit.tetrahedron" remoteName="shape.unit.tetrahedron"/>
+   <ImportType localName="coordinates.rc.3d" remoteName="coordinates.rc.3d"/>
+   <ImportType localName="coordinates.rc.3d.component" remoteName="coordinates.rc.3d.component"/>
+   <ImportEvaluator localName="coordinates.rc.3d.component.argument" remoteName="coordinates.rc.3d.component.argument"/>
+  </Import>
+  <EnsembleType name="Diffusion.nodes">
+   <Members>
+    <MemberRange min="1" max="91527"/>
+   </Members>
+  </EnsembleType>
+  <ArgumentEvaluator name="Diffusion.nodes.argument" valueType="Diffusion.nodes"/>
+  <MeshType name="Diffusion.mesh">
+   <Elements name="element">
+    <Members>
+     <MemberRange min="1" max="492160"/>
+    </Members>
+   </Elements>
+   <Chart name="xi">
+    <Components name="Diffusion.mesh.xi.component" count="3"/>
+   </Chart>
+   <Shapes evaluator="shape.unit.tetrahedron"/>
+  </MeshType>
+  <ArgumentEvaluator name="Diffusion.mesh.argument" valueType="Diffusion.mesh"/>
+  <ArgumentEvaluator name="Diffusion.dofs.node" valueType="real.1d"/>
+  <DataResource name="Diffusion.component1.connectivity.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="Diffusion.component1.connectivity" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="Diffusion.component1.connectivity" location="1" rank="2">
+    <RawArraySize>492160 4</RawArraySize>
+    <ArrayDataSize>492160 4</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <PiecewiseEvaluator name="Diffusion.component1.template" valueType="real.1d">
+   <IndexEvaluators>
+    <IndexEvaluator evaluator="Diffusion.mesh.argument.element" indexNumber="1"/>
+   </IndexEvaluators>
+   <EvaluatorMap default="Diffusion.component1trilinearSimplex_3.evaluator"/>
+  </PiecewiseEvaluator>
+  <ParameterEvaluator name="Diffusion.component13d.tetrahedron4" valueType="Diffusion.nodes">
+   <DenseArrayData data="Diffusion.component1.connectivity">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="Diffusion.mesh.argument.element"/>
+     <IndexEvaluator evaluator="localNodes.3d.tetrahedron4.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <AggregateEvaluator name="Diffusion.component1trilinearSimplex_3.parameters" valueType="parameters.3d.unit.trilinearSimplex">
+   <Bindings>
+    <BindIndex argument="localNodes.3d.tetrahedron4.argument" indexNumber="1"/>
+    <Bind argument="Diffusion.nodes.argument" source="Diffusion.component13d.tetrahedron4"/>
+   </Bindings>
+   <ComponentEvaluators default="Diffusion.dofs.node"/>
+  </AggregateEvaluator>
+  <ReferenceEvaluator name="Diffusion.component1trilinearSimplex_3.evaluator" evaluator="interpolator.3d.unit.trilinearSimplex" valueType="real.1d">
+   <Bindings>
+    <Bind argument="chart.3d.argument" source="Diffusion.mesh.argument.xi"/>
+    <Bind argument="parameters.3d.unit.trilinearSimplex.argument" source="Diffusion.component1trilinearSimplex_3.parameters"/>
+   </Bindings>
+  </ReferenceEvaluator>
+  <DataResource name="Diffusion.geometric.dofs.node.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="Diffusion.geometric.dofs.node" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="Diffusion.geometric.dofs.node.data" location="1" rank="2">
+    <RawArraySize>91527 3</RawArraySize>
+    <ArrayDataSize>91527 3</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <ParameterEvaluator name="Diffusion.geometric.dofs.node" valueType="real.1d">
+   <DenseArrayData data="Diffusion.geometric.dofs.node.data">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="Diffusion.nodes.argument"/>
+     <IndexEvaluator evaluator="coordinates.rc.3d.component.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <AggregateEvaluator name="Diffusion.geometric" valueType="coordinates.rc.3d">
+   <Bindings>
+    <BindIndex argument="coordinates.rc.3d.component.argument" indexNumber="1"/>
+    <Bind argument="Diffusion.dofs.node" source="Diffusion.geometric.dofs.node"/>
+   </Bindings>
+   <ComponentEvaluators>
+    <ComponentEvaluator component="1" evaluator="Diffusion.component1.template"/>
+    <ComponentEvaluator component="2" evaluator="Diffusion.component1.template"/>
+    <ComponentEvaluator component="3" evaluator="Diffusion.component1.template"/>
+   </ComponentEvaluators>
+  </AggregateEvaluator>
+  <DataResource name="Diffusion.phi.dofs.node.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="Diffusion.phi.dofs.node" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="Diffusion.phi.dofs.node.data" location="1" rank="1">
+    <RawArraySize>91527</RawArraySize>
+    <ArrayDataSize>91527</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <ParameterEvaluator name="Diffusion.phi.dofs.node" valueType="real.1d">
+   <DenseArrayData data="Diffusion.phi.dofs.node.data">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="Diffusion.nodes.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <ReferenceEvaluator name="Diffusion.phi" evaluator="Diffusion.component1.template" valueType="real.1d">
+   <Bindings>
+    <Bind argument="Diffusion.dofs.node" source="Diffusion.phi.dofs.node"/>
+   </Bindings>
+  </ReferenceEvaluator>
+ </Region>
+</Fieldml>
