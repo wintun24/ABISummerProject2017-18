@@ -1,0 +1,10 @@
+To run darcy flow, run 'run_placenta.py'
+The read in files are:
+
+ - full.exelem
+ - full.exnode
+ - stem_xy.txt
+
+The rest are outputfiles from developing placental mesh, villous tree and sampling grid
+
+The output files for darcy is in 'output' folder
