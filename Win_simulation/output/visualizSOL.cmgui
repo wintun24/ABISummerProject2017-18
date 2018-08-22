@@ -1,0 +1,16 @@
+gfx read node "./STATIC_SOLUTION.part0.exnode";
+gfx read element "./STATIC_SOLUTION.part0.exelem";
+
+
+gfx define field Coordinate.x component Coordinate.x
+gfx define field Coordinate.y component Coordinate.y
+gfx define field Coordinate.z component Coordinate.z
+
+gfx define field vel_x component Dependent.1
+gfx define field vel_y component Dependent.2
+gfx define field vel_z component Dependent.3
+gfx define field pressure component Dependent.4
+gfx edit scene
+gfx create window 1;
+gfx def faces
+
